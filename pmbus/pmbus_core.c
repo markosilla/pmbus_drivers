@@ -153,11 +153,14 @@ int pmbus_write_byte(struct i2c_client *client, int page, u8 value)
 
 	if (page >= 0) {
 		rv = pmbus_set_page(client, page);
+
+        printk(KERN_DEBUG "pmbus_write_byte %d!\n", rv);
+
 		if (rv < 0)
 			return rv;
 	}
 
-    printk(KERN_DEBUG "pmbus_write_byte %d!\n", rv);
+    printk(KERN_DEBUG "pmbus_write_byte2-- %d!\n", value);
 
 	return i2c_smbus_write_byte(client, value);
 }
