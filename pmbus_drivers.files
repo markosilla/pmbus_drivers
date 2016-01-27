@@ -1,0 +1,12 @@
+pmbus/adm1275.c
+pmbus/lm25066.c
+pmbus/ltc2978.c
+pmbus/max16064.c
+pmbus/max34440.c
+pmbus/max8688.c
+pmbus/pmbus.c
+pmbus/pmbus_core.c
+pmbus/tps40422.c
+pmbus/ucd9000.c
+pmbus/ucd9200.c
+pmbus/zl6100.c
