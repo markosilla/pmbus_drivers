@@ -140,6 +140,9 @@ int pmbus_set_page(struct i2c_client *client, u8 page)
 		else
 			data->currpage = page;
 	}
+
+    printk(KERN_DEBUG "pmbus_set_page %d!\n", rv);
+
 	return rv;
 }
 EXPORT_SYMBOL_GPL(pmbus_set_page);
@@ -153,6 +156,8 @@ int pmbus_write_byte(struct i2c_client *client, int page, u8 value)
 		if (rv < 0)
 			return rv;
 	}
+
+    printk(KERN_DEBUG "pmbus_write_byte %d!\n", rv);
 
 	return i2c_smbus_write_byte(client, value);
 }
@@ -170,6 +175,9 @@ static int _pmbus_write_byte(struct i2c_client *client, int page, u8 value)
 
 	if (info->write_byte) {
 		status = info->write_byte(client, page, value);
+
+        printk(KERN_DEBUG "_pmbus_write_byte %d!\n", rv);
+
 		if (status != -ENODATA)
 			return status;
 	}
@@ -181,6 +189,9 @@ int pmbus_write_word_data(struct i2c_client *client, u8 page, u8 reg, u16 word)
 	int rv;
 
 	rv = pmbus_set_page(client, page);
+
+    printk(KERN_DEBUG "pmbus_write_word_data %d %x %x!\n", rv, reg, word);
+
 	if (rv < 0)
 		return rv;
 
@@ -201,6 +212,9 @@ static int _pmbus_write_word_data(struct i2c_client *client, int page, int reg,
 
 	if (info->write_word_data) {
 		status = info->write_word_data(client, page, reg, word);
+
+        printk(KERN_DEBUG "_pmbus_write_word_data %d %x %x!\n", rv, reg, word);
+
 		if (status != -ENODATA)
 			return status;
 	}
@@ -214,6 +228,9 @@ int pmbus_read_word_data(struct i2c_client *client, u8 page, u8 reg)
 	int rv;
 
 	rv = pmbus_set_page(client, page);
+
+    printk(KERN_DEBUG "pmbus_read_word_data %d %x!\n", rv, reg);
+
 	if (rv < 0)
 		return rv;
 
@@ -233,6 +250,9 @@ static int _pmbus_read_word_data(struct i2c_client *client, int page, int reg)
 
 	if (info->read_word_data) {
 		status = info->read_word_data(client, page, reg);
+
+        printk(KERN_DEBUG "_pmbus_read_word_data %d %x!\n", status, reg);
+
 		if (status != -ENODATA)
 			return status;
 	}
@@ -272,6 +292,8 @@ int pmbus_update_byte_data(struct i2c_client *client, int page, u8 reg,
 {
 	unsigned int tmp;
 	int rv;
+
+    printk(KERN_DEBUG "pmbus_update_byte_data %x %x %x %x!\n", page, reg, mask, value);
 
 	rv = pmbus_read_byte_data(client, page, reg);
 	if (rv < 0)
@@ -465,6 +487,8 @@ static long pmbus_reg2data_linear(struct pmbus_data *data,
 		val <<= exponent;
 	else
 		val >>= -exponent;
+
+    printk(KERN_DEBUG "pmbus_reg2data_linear %x %x %x!\n", val, exponent, mantissa);
 
 	return val;
 }
@@ -782,6 +806,9 @@ static ssize_t pmbus_set_sensor(struct device *dev,
 	mutex_lock(&data->update_lock);
 	regval = pmbus_data2reg(data, sensor, val);
 	ret = _pmbus_write_word_data(client, sensor->page, sensor->reg, regval);
+
+    printk(KERN_DEBUG "pmbus_set_sensor %d!\n", ret);
+
 	if (ret < 0)
 		rv = ret;
 	else
