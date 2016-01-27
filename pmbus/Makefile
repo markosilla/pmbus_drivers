@@ -1,3 +1,14 @@
+obj-m := zl6100.o
+
+all:
+
+	make -C /lib/modules/`uname -r`/build	M=$(PWD) modules
+
+clean:
+
+	make -C /lib/modules/`uname -r`/build	M=$(PWD) clean
+
+
 #
 # Makefile for PMBus chip drivers.
 #
