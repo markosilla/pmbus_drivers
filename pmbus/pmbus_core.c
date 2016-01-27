@@ -176,7 +176,7 @@ static int _pmbus_write_byte(struct i2c_client *client, int page, u8 value)
 	if (info->write_byte) {
 		status = info->write_byte(client, page, value);
 
-        printk(KERN_DEBUG "_pmbus_write_byte %d!\n", rv);
+        printk(KERN_DEBUG "_pmbus_write_byte %d!\n", status);
 
 		if (status != -ENODATA)
 			return status;
@@ -213,7 +213,7 @@ static int _pmbus_write_word_data(struct i2c_client *client, int page, int reg,
 	if (info->write_word_data) {
 		status = info->write_word_data(client, page, reg, word);
 
-        printk(KERN_DEBUG "_pmbus_write_word_data %d %x %x!\n", rv, reg, word);
+        printk(KERN_DEBUG "_pmbus_write_word_data %d %x %x!\n", status, reg, word);
 
 		if (status != -ENODATA)
 			return status;
@@ -488,7 +488,7 @@ static long pmbus_reg2data_linear(struct pmbus_data *data,
 	else
 		val >>= -exponent;
 
-    printk(KERN_DEBUG "pmbus_reg2data_linear %x %x %x!\n", val, exponent, mantissa);
+    printk(KERN_DEBUG "pmbus_reg2data_linear %lx %x %x!\n", val, exponent, mantissa);
 
 	return val;
 }
