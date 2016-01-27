@@ -172,6 +172,10 @@ static int pmbus_probe(struct i2c_client *client,
 	if (!info)
 		return -ENOMEM;
 
+    printk(KERN_WARNING "This is a warning!\n");
+    printk(KERN_DEBUG "This is a debug notice!\n");
+    printk("I did not specify a loglevel!\n");
+
 	info->pages = id->driver_data;
 	info->identify = pmbus_identify;
 
