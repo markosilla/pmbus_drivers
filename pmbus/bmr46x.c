@@ -139,31 +139,15 @@ static int bmr46x_read_word_data(struct i2c_client *client, int page, int reg)
     if (page > 0)
         return -ENXIO;
 
-    if (data->id == zl2005) {
-        /*
-         * Limit register detection is not reliable on ZL2005.
-         * Make sure registers are not erroneously detected.
-         */
-        switch (reg) {
-        case PMBUS_VOUT_OV_WARN_LIMIT:
-        case PMBUS_VOUT_UV_WARN_LIMIT:
-        case PMBUS_IOUT_OC_WARN_LIMIT:
-            return -ENXIO;
-        }
-    }
-
+    /*
+     * Limit register detection.
+     */
     switch (reg) {
-    case PMBUS_VIRT_READ_VMON:
-        vreg = MFR_READ_VMON;
-        break;
-    case PMBUS_VIRT_VMON_OV_WARN_LIMIT:
-    case PMBUS_VIRT_VMON_OV_FAULT_LIMIT:
-        vreg = MFR_VMON_OV_FAULT_LIMIT;
-        break;
-    case PMBUS_VIRT_VMON_UV_WARN_LIMIT:
-    case PMBUS_VIRT_VMON_UV_FAULT_LIMIT:
-        vreg = MFR_VMON_UV_FAULT_LIMIT;
-        break;
+    case PMBUS_VOUT_OV_WARN_LIMIT:
+    case PMBUS_VOUT_UV_WARN_LIMIT:
+    case PMBUS_IOUT_OC_WARN_LIMIT:
+    case PMBUS_IOUT_OC_LV_FAULT_LIMIT: /* NotImpl on BMR461 */
+        return -ENXIO;
     default:
         if (reg >= PMBUS_VIRT_BASE)
             return -ENXIO;
@@ -174,17 +158,6 @@ static int bmr46x_read_word_data(struct i2c_client *client, int page, int reg)
     bmr46x_wait(data);
     ret = pmbus_read_word_data(client, page, vreg);
     data->access = ktime_get();
-    if (ret < 0)
-        return ret;
-
-    switch (reg) {
-    case PMBUS_VIRT_VMON_OV_WARN_LIMIT:
-        ret = bmr46x_d2l(DIV_ROUND_CLOSEST(bmr46x_l2d(ret) * 9, 10));
-        break;
-    case PMBUS_VIRT_VMON_UV_WARN_LIMIT:
-        ret = bmr46x_d2l(DIV_ROUND_CLOSEST(bmr46x_l2d(ret) * 11, 10));
-        break;
-    }
 
     return ret;
 }
@@ -200,26 +173,19 @@ static int bmr46x_read_byte_data(struct i2c_client *client, int page, int reg)
 
     bmr46x_wait(data);
 
+    /*
+     * Limit register detection.
+     */
     switch (reg) {
-    case PMBUS_VIRT_STATUS_VMON:
-        ret = pmbus_read_byte_data(client, 0,
-                       PMBUS_STATUS_MFR_SPECIFIC);
-        if (ret < 0)
-            break;
-
-        status = 0;
-        if (ret & VMON_UV_WARNING)
-            status |= PB_VOLTAGE_UV_WARNING;
-        if (ret & VMON_OV_WARNING)
-            status |= PB_VOLTAGE_OV_WARNING;
-        if (ret & VMON_UV_FAULT)
-            status |= PB_VOLTAGE_UV_FAULT;
-        if (ret & VMON_OV_FAULT)
-            status |= PB_VOLTAGE_OV_FAULT;
-        ret = status;
-        break;
+    case PMBUS_VOUT_OV_WARN_LIMIT:
+    case PMBUS_VOUT_UV_WARN_LIMIT:
+    case PMBUS_IOUT_OC_WARN_LIMIT:
+    case PMBUS_IOUT_OC_LV_FAULT_LIMIT: /* NotImpl on BMR461 */
+        return -ENXIO;
     default:
-        ret = pmbus_read_byte_data(client, page, reg);
+        if (reg >= PMBUS_VIRT_BASE)
+            return -ENXIO;
+        vreg = reg;
         break;
     }
     data->access = ktime_get();
@@ -237,29 +203,20 @@ static int bmr46x_write_word_data(struct i2c_client *client, int page, int reg,
     if (page > 0)
         return -ENXIO;
 
+    /*
+     * Limit register detection.
+     */
     switch (reg) {
-    case PMBUS_VIRT_VMON_OV_WARN_LIMIT:
-        word = bmr46x_d2l(DIV_ROUND_CLOSEST(bmr46x_l2d(word) * 10, 9));
-        vreg = MFR_VMON_OV_FAULT_LIMIT;
-        pmbus_clear_cache(client);
-        break;
-    case PMBUS_VIRT_VMON_OV_FAULT_LIMIT:
-        vreg = MFR_VMON_OV_FAULT_LIMIT;
-        pmbus_clear_cache(client);
-        break;
-    case PMBUS_VIRT_VMON_UV_WARN_LIMIT:
-        word = bmr46x_d2l(DIV_ROUND_CLOSEST(bmr46x_l2d(word) * 10, 11));
-        vreg = MFR_VMON_UV_FAULT_LIMIT;
-        pmbus_clear_cache(client);
-        break;
-    case PMBUS_VIRT_VMON_UV_FAULT_LIMIT:
-        vreg = MFR_VMON_UV_FAULT_LIMIT;
-        pmbus_clear_cache(client);
-        break;
+    case PMBUS_VOUT_OV_WARN_LIMIT:
+    case PMBUS_VOUT_UV_WARN_LIMIT:
+    case PMBUS_IOUT_OC_WARN_LIMIT:
+    case PMBUS_IOUT_OC_LV_FAULT_LIMIT: /* NotImpl on BMR461 */
+        return -ENXIO;
     default:
         if (reg >= PMBUS_VIRT_BASE)
             return -ENXIO;
         vreg = reg;
+        break;
     }
 
     bmr46x_wait(data);
@@ -297,33 +254,15 @@ static int bmr46x_probe(struct i2c_client *client, const struct i2c_device_id *i
     int ret;
     struct bmr46x_data *data;
     struct pmbus_driver_info *info;
-    char * device_id = "bmr461";
-    const struct i2c_device_id *mid;
 
     if (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_READ_WORD_DATA))
         return -ENODEV;
-
-    dev_info(&client->dev, "Device ID %s\n", device_id);
-
-    mid = NULL;
-    for (mid = bmr46x_id; mid->name[0]; mid++) {
-        if (!strncasecmp(mid->name, device_id, strlen(mid->name)))
-            break;
-    }
-    if (!mid->name[0]) {
-        dev_err(&client->dev, "Unsupported device\n");
-        return -ENODEV;
-    }
-    if (id->driver_data != mid->driver_data)
-        dev_notice(&client->dev,
-               "Device mismatch: Configured %s, detected %s\n",
-               id->name, mid->name);
 
     data = devm_kzalloc(&client->dev, sizeof(struct bmr46x_data),GFP_KERNEL);
     if (!data)
         return -ENOMEM;
 
-    data->id = mid->driver_data;
+    data->id = id->driver_data;
 
     /*
      * According to information from the chip vendor, all currently
@@ -355,7 +294,21 @@ static int bmr46x_probe(struct i2c_client *client, const struct i2c_device_id *i
     info->write_word_data = bmr46x_write_word_data;
     info->write_byte = bmr46x_write_byte;
 
-    return pmbus_do_probe(client, mid, info);
+    return pmbus_do_probe(client, id, info);
+}
+
+static int bmr46x_probe(struct i2c_client *client, const struct i2c_device_id *id)
+{
+    struct bmr46x_data *data;
+
+    data = devm_kzalloc(&client->dev, sizeof(struct max34440_data),
+                GFP_KERNEL);
+    if (!data)
+        return -ENOMEM;
+    data->id = id->driver_data;
+    data->info = max34440_info[id->driver_data];
+
+    return pmbus_do_probe(client, id, &data->info);
 }
 
 static struct i2c_driver bmr46x_driver = {
