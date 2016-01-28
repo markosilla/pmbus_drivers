@@ -39,86 +39,11 @@ struct bmr46x_data {
 
 #define to_bmr46x_data(x)  container_of(x, struct bmr46x_data, info)
 
-#define MFR_VMON_OV_FAULT_LIMIT		0xf5
-#define MFR_VMON_UV_FAULT_LIMIT		0xf6
-#define MFR_READ_VMON			0xf7
-
-#define VMON_UV_WARNING			(1 << 5)
-#define VMON_OV_WARNING			(1 << 4)
-#define VMON_UV_FAULT			(1 << 1)
-#define VMON_OV_FAULT			(1 << 0)
-
 #define BMR46X_WAIT_TIME		1000	/* uS	*/
 
 static ushort delay = BMR46X_WAIT_TIME;
 module_param(delay, ushort, 0644);
 MODULE_PARM_DESC(delay, "Delay between chip accesses in uS");
-
-/* Convert linear sensor value to milli-units */
-static long bmr46x_l2d(s16 l)
-{
-    s16 exponent;
-    s32 mantissa;
-    long val;
-
-    exponent = l >> 11;
-    mantissa = ((s16)((l & 0x7ff) << 5)) >> 5;
-
-    val = mantissa;
-
-    /* scale result to milli-units */
-    val = val * 1000L;
-
-    if (exponent >= 0)
-        val <<= exponent;
-    else
-        val >>= -exponent;
-
-    return val;
-}
-
-#define MAX_MANTISSA	(1023 * 1000)
-#define MIN_MANTISSA	(511 * 1000)
-
-static u16 bmr46x_d2l(long val)
-{
-    s16 exponent = 0, mantissa;
-    bool negative = false;
-
-    /* simple case */
-    if (val == 0)
-        return 0;
-
-    if (val < 0) {
-        negative = true;
-        val = -val;
-    }
-
-    /* Reduce large mantissa until it fits into 10 bit */
-    while (val >= MAX_MANTISSA && exponent < 15) {
-        exponent++;
-        val >>= 1;
-    }
-    /* Increase small mantissa to improve precision */
-    while (val < MIN_MANTISSA && exponent > -15) {
-        exponent--;
-        val <<= 1;
-    }
-
-    /* Convert mantissa from milli-units to units */
-    mantissa = DIV_ROUND_CLOSEST(val, 1000);
-
-    /* Ensure that resulting number is within range */
-    if (mantissa > 0x3ff)
-        mantissa = 0x3ff;
-
-    /* restore sign */
-    if (negative)
-        mantissa = -mantissa;
-
-    /* Convert to 5 bit exponent, 11 bit mantissa */
-    return (mantissa & 0x7ff) | ((exponent << 11) & 0xf800);
-}
 
 /* Some chips need a delay between accesses */
 static inline void bmr46x_wait(const struct bmr46x_data *data)
@@ -170,9 +95,6 @@ static int bmr46x_read_byte_data(struct i2c_client *client, int page, int reg)
 
     if (page > 0)
         return -ENXIO;
-
-    bmr46x_wait(data);
-
     /*
      * Limit register detection.
      */
@@ -185,9 +107,11 @@ static int bmr46x_read_byte_data(struct i2c_client *client, int page, int reg)
     default:
         if (reg >= PMBUS_VIRT_BASE)
             return -ENXIO;
-        vreg = reg;
         break;
     }
+
+    bmr46x_wait(data);
+    ret = pmbus_read_byte_data(client, page, reg);
     data->access = ktime_get();
 
     return ret;
