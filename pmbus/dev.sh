@@ -13,9 +13,9 @@ cp pmbus.ko /lib/modules/`uname -r`/
 cp pmbus_core.ko /lib/modules/`uname -r`/
 
 echo "REMOVE MODULES"
-sudo rmmod bmr46x.ko
-sudo rmmod pmbus.ko
-sudo rmmod pmbus_core.ko
+sudo modprobe -r bmr46x.ko
+sudo modprobe -r pmbus.ko
+sudo modprobe -r pmbus_core.ko
 sudo modprobe -r hwmon
 
 echo "ADD MODULES"
