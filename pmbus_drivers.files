@@ -11,3 +11,4 @@ pmbus/ucd9000.c
 pmbus/ucd9200.c
 pmbus/zl6100.c
 pmbus/bmr46x.c
+pmbus/Makefile
