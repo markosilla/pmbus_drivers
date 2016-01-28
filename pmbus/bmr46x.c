@@ -91,7 +91,7 @@ static int bmr46x_read_byte_data(struct i2c_client *client, int page, int reg)
 {
     const struct pmbus_driver_info *info = pmbus_get_driver_info(client);
     struct bmr46x_data *data = to_bmr46x_data(info);
-    int ret, status;
+    int ret;
 
     if (page > 0)
         return -ENXIO;
@@ -175,7 +175,6 @@ MODULE_DEVICE_TABLE(i2c, bmr46x_id);
 
 static int bmr46x_probe(struct i2c_client *client, const struct i2c_device_id *id)
 {
-    int ret;
     struct bmr46x_data *data;
     struct pmbus_driver_info *info;
 
