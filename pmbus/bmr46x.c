@@ -121,7 +121,7 @@ static u16 bmr46x_d2l(long val)
 }
 
 /* Some chips need a delay between accesses */
-static inline void bmr46x_wait(const struct zl6100_data *data)
+static inline void bmr46x_wait(const struct bmr46x_data *data)
 {
     if (data->delay) {
         s64 delta = ktime_us_delta(ktime_get(), data->access);
