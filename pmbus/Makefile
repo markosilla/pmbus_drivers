@@ -1,27 +1,15 @@
-obj-m := zl6100.o
+TARGET		:= $(shell uname -r)
+KERNEL_MODULES	:= /lib/modules/$(TARGET)
+KERNEL_BUILD	:= $(KERNEL_MODULES)/build
+DRIVER 		:= pmbus pmbus_core zl6100
 
-all:
+obj-m		:= $(patsubst %,%.o,$(DRIVER))
+obj-ko		:= $(patsubst %,%.ko,$(DRIVER))
 
-	make -C /lib/modules/`uname -r`/build	M=$(PWD) modules
+all: 
+	make -C $(KERNEL_BUILD)	M=$(PWD) modules
+	#make -C /lib/modules/`uname -r`/build	M=$(PWD) modules_install
 
 clean:
 
-	make -C /lib/modules/`uname -r`/build	M=$(PWD) clean
-
-
-#
-# Makefile for PMBus chip drivers.
-#
-
-obj-$(CONFIG_PMBUS)		+= pmbus_core.o
-obj-$(CONFIG_SENSORS_PMBUS)	+= pmbus.o
-obj-$(CONFIG_SENSORS_ADM1275)	+= adm1275.o
-obj-$(CONFIG_SENSORS_LM25066)	+= lm25066.o
-obj-$(CONFIG_SENSORS_LTC2978)	+= ltc2978.o
-obj-$(CONFIG_SENSORS_MAX16064)	+= max16064.o
-obj-$(CONFIG_SENSORS_MAX34440)	+= max34440.o
-obj-$(CONFIG_SENSORS_MAX8688)	+= max8688.o
-obj-$(CONFIG_SENSORS_TPS40422)	+= tps40422.o
-obj-$(CONFIG_SENSORS_UCD9000)	+= ucd9000.o
-obj-$(CONFIG_SENSORS_UCD9200)	+= ucd9200.o
-obj-$(CONFIG_SENSORS_ZL6100)	+= zl6100.o
+	make -C $(KERNEL_BUILD)	M=$(PWD) clean

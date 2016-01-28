@@ -318,21 +318,19 @@ static int zl6100_probe(struct i2c_client *client,
 	int ret;
 	struct zl6100_data *data;
 	struct pmbus_driver_info *info;
-	u8 device_id[I2C_SMBUS_BLOCK_MAX + 1];
+	char * device_id = "bmr451";
 	const struct i2c_device_id *mid;
 
-	if (!i2c_check_functionality(client->adapter,
-				     I2C_FUNC_SMBUS_READ_WORD_DATA
-				     | I2C_FUNC_SMBUS_READ_BLOCK_DATA))
+	if (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_READ_WORD_DATA))
 		return -ENODEV;
 
-	ret = i2c_smbus_read_block_data(client, ZL6100_DEVICE_ID,
+	/*ret = i2c_smbus_read_block_data(client, ZL6100_DEVICE_ID,
 					device_id);
 	if (ret < 0) {
 		dev_err(&client->dev, "Failed to read device ID\n");
 		return ret;
-	}
-	device_id[ret] = '\0';
+	}*/
+	//device_id = "bmr463";
 	dev_info(&client->dev, "Device ID %s\n", device_id);
 
 	mid = NULL;
