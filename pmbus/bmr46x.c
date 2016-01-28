@@ -221,20 +221,6 @@ static int bmr46x_probe(struct i2c_client *client, const struct i2c_device_id *i
     return pmbus_do_probe(client, id, info);
 }
 
-static int bmr46x_probe(struct i2c_client *client, const struct i2c_device_id *id)
-{
-    struct bmr46x_data *data;
-
-    data = devm_kzalloc(&client->dev, sizeof(struct max34440_data),
-                GFP_KERNEL);
-    if (!data)
-        return -ENOMEM;
-    data->id = id->driver_data;
-    data->info = max34440_info[id->driver_data];
-
-    return pmbus_do_probe(client, id, &data->info);
-}
-
 static struct i2c_driver bmr46x_driver = {
     .driver = {
            .name = "bmr46x",
