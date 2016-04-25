@@ -25,4 +25,7 @@ sudo modprobe pmbus
 #default
 sudo modprobe bmr46x delay=1000
 
+echo "DEPMOD"
+sudo depmod -a
+
 echo "FINISHED"
